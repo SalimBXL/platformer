@@ -1,8 +1,12 @@
 function love.load()
     love.window.setMode(1000, 768)
 
+    -- Libraries
     anim8 = require 'libraries/anim8/anim8'
     sti = require 'libraries/Simple-Tiled-Implementation/sti'
+    cameraFile = require 'libraries/hump/camera'
+
+    cam = cameraFile()
 
     -- Animations
     sprites = {}
@@ -39,14 +43,20 @@ function love.update(dt)
     world:update(dt)
     gameMap:update(dt)
     playerUpdate(dt)
+
+    local px, py = player:getPosition()
+    cam:lookAt(px, love.graphics.getHeight()/2)
 end
 
 
 function love.draw()
-    gameMap:drawLayer(gameMap.layers["Tile Layer 1"])
-    world:draw()
-    drawPlayer()
+    cam:attach()
+        gameMap:drawLayer(gameMap.layers["Tile Layer 1"])
+        world:draw()
+        drawPlayer()
+    cam:detach()
 end
+
 
 function getPlayerColliders()
     local colliders = world:queryRectangleArea(player:getX() - 20, player:getY() + 50, 50, 2, {'Platform'})
