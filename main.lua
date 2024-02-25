@@ -23,18 +23,15 @@ function love.load()
     world:addCollisionClass('Player' --[[, {ignores = {'Platform'}}]])
     world:addCollisionClass('Danger')
 
-    -- Platform definition
-    platform = world:newRectangleCollider(250,400,300,100, {collision_class = "Platform"})
-    platform:setType('static')
-
     -- Player definition
     require('player')
 
-    -- Danger zoneS definition
-    dangerZone = world:newRectangleCollider(0, 550, 800, 50, {collision_class = "Danger"})
-    dangerZone:setType('static')
+    -- Danger zones definition
+    --dangerZone = world:newRectangleCollider(0, 550, 800, 50, {collision_class = "Danger"})
+    --dangerZone:setType('static')
 
     -- Map Level
+    platforms = {}
     loadMap()
 end
 
@@ -68,10 +65,23 @@ function love.keypressed(key)
     end
 end
 
+function spawnPlatform(x, y, width, height)
+    if width > 0 and height > 0 then
+        local platform = world:newRectangleCollider(x, y, width, height, {collision_class = "Platform"})
+        platform:setType('static')
+        table.insert(platforms, platform)
+    end
+end
 
 function loadMap()
     gameMap = sti("maps/level1.lua")
+    local objects = gameMap.layers["Platforms"].objects
+    for i, obj in pairs(objects) do
+        spawnPlatform(obj.x, obj.y, obj.width, obj.height)
+    end
 end
+
+
 
 
 --[[
