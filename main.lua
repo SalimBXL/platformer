@@ -1,3 +1,7 @@
+DATA_FILE = "data.lua"
+DEFAULT_MUSIC_VOLUME = 0.5
+
+
 function love.load()
     love.window.setMode(1000, 768)
 
@@ -9,10 +13,19 @@ function love.load()
 
     cam = cameraFile()
 
+    -- Sounds
+    sounds = {}
+    sounds.jump = love.audio.newSource("audio/jump.wav", "static")
+    sounds.music = love.audio.newSource("audio/music.mp3", "stream")
+    sounds.music:setLooping(true)
+    sounds.music:setVolume(0.5)
+    sounds.music:play()
+
     -- Sprites
     sprites = {}
     sprites.playerSheet = love.graphics.newImage('sprites/playerSheet.png')
     sprites.enemySheet = love.graphics.newImage('sprites/enemySheet.png')
+    sprites.background = love.graphics.newImage('sprites/background.png')
     
     -- Animations
     local grid = anim8.newGrid(614, 564, sprites.playerSheet:getWidth(), sprites.playerSheet:getHeight())
@@ -32,22 +45,29 @@ function love.load()
     world:addCollisionClass('Player' --[[, {ignores = {'Platform'}}]])
     world:addCollisionClass('Danger')
 
-    -- Player definition
+    -- Requires
     require('player')
-
-    -- Ennemies definition
     require('enemy')
+    require('libraries/show')
 
     -- Danger zones definition
-    --dangerZone = world:newRectangleCollider(0, 550, 800, 50, {collision_class = "Danger"})
-    --dangerZone:setType('static')
+    dangerZone = world:newRectangleCollider(-500, 800, 5000, 50, {collision_class = "Danger"})
+    dangerZone:setType('static')
 
     -- Map Level
     platforms = {}
     flagX = 0
     flagY = 0
-    currentLevel = "level1"
-    loadMap(currentLevel)
+
+    -- Saving and loading Datas
+    saveData = {}
+    saveData.currentLevel = "level1"
+    if love.filesystem.getInfo(DATA_FILE) then
+        local data = love.filesystem.load(DATA_FILE)
+        data()
+    end
+
+    loadMap(saveData.currentLevel)
 end
 
 function love.update(dt)
@@ -61,9 +81,9 @@ function love.update(dt)
 
     local colliders = world:queryCircleArea(flagX, flagY, 10, {'Player'})
     if #colliders > 0 then
-        if currentLevel == "level1" then
+        if saveData.currentLevel == "level1" then
             loadMap("level2")
-        elseif currentLevel == "level2" then
+        elseif saveData.currentLevel == "level2" then
             loadMap("level1")
         end
     end
@@ -71,9 +91,10 @@ end
 
 
 function love.draw()
+    love.graphics.draw(sprites.background, 0, 0)
     cam:attach()
         gameMap:drawLayer(gameMap.layers["Tile Layer 1"])
-        world:draw()
+        --world:draw()
         drawPlayer()
         drawEnemies()
     cam:detach()
@@ -127,10 +148,21 @@ function destroyAll()
 end
 
 function loadMap(mapName)
-    currentLevel = mapName
+    saveData.currentLevel = mapName
+    love.filesystem.write(DATA_FILE, table.show(saveData, "saveData"))
+
     destroyAll()
-    player:setPosition(300, 100)
+
     gameMap = sti("maps/" .. mapName .. ".lua")
+
+    -- Starting Point For Player
+    local startObjects = gameMap.layers["Start"].objects
+    for i, obj in pairs(startObjects) do
+        --print("x:"..obj.x.." y:"..obj.y)
+        playerStartX = obj.x
+        playerStartY = obj.y
+    end
+    player:setPosition(playerStartX, playerStartY)
 
     -- Platforms
     local platformObjects = gameMap.layers["Platforms"].objects
