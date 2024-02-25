@@ -56,14 +56,12 @@ end
 -- Manage Jump for player
 function love.keypressed(key)
     if key == 'up' then
-        if player.grounded then
-            player:applyLinearImpulse(0, -4000)
-            player.animation = animations.jump
-        end
+        playerJump()
     end
 end
 
 
+--[[
 function love.mousepressed(x, y, button)
     if button == 1 then
         local colliders = world:queryCircleArea(x, y, 200, {'Platform', 'Danger'})
@@ -72,3 +70,4 @@ function love.mousepressed(x, y, button)
         end
     end
 end
+]]

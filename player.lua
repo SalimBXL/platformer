@@ -48,3 +48,11 @@ function drawPlayer()
     local px, py = player:getPosition()
     player.animation:draw(sprites.playerSheet, px, py, nil, (0.25 * player.direction), 0.25, 130, 300)
 end
+
+
+function playerJump()
+    if player.grounded then
+        player:applyLinearImpulse(0, -4000)
+        player.animation = animations.jump
+    end
+end
